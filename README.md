@@ -1,4 +1,4 @@
-#DocScanner
+# DocScanner
 
 Welcome to my android app! Please note that the app is still a work in progress, here are planned features:
 
