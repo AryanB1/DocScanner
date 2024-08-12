@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Doc Scanner</string>
+    <string name="scan_new_document">Click the button to scan a new document!</string>
+</resources>
