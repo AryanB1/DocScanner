@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.play.services.mlkit.document.scanner)
     implementation(libs.coil.kt.coil.compose)
     implementation(platform(libs.androidx.compose.bom.v20240600))
+    implementation(libs.androidx.activity.ktx)
 //    implementation(libs.gson)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

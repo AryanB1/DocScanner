@@ -1,7 +1,11 @@
 package com.example.docscanner
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -37,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.example.docscanner.ui.theme.DocScannerTheme
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
@@ -48,7 +53,9 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 
+// Background
 @Composable
 fun MainScreen() {
 	// Sets background colour
@@ -74,24 +81,24 @@ class MainActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		val docScanner = createDocumentScanner()
-		enableEdgeToEdge()
+		// figure out if I even want edge to edge display for app
+//		enableEdgeToEdge()
 
 		setContent {
 			DocScannerTheme {
 				MainScreen()
 				var showDialog by remember { mutableStateOf(false) }
-				var imageURIs by remember { mutableStateOf<List<Uri>>(emptyList()) }
+				var pdfUris by remember { mutableStateOf<Uri?>(null) }
 
 				val DocLauncher = createDocLauncher(
-					onScanned = { uris ->
-						imageURIs = uris
-						showDialog = true // Trigger the dialog after the scan
-					},
-					onPdfSaved = { pdfUri -> savePdfFile(pdfUri) }
+					onPdfSaved = { pdfUri ->
+						pdfUris = pdfUri
+						showDialog = true
+					}
 				)
 				Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
 					Column(modifier = Modifier.fillMaxSize()) {
-						ScannedImages(imageURIs)
+//						ScannedImages(imageURIs)
 					}
 
 					ScanDocumentButton(docScanner = docScanner, docLauncher = DocLauncher, this@MainActivity)
@@ -100,7 +107,9 @@ class MainActivity : ComponentActivity() {
 						DocumentScanScreen(
 							onDismiss = { showDialog = false },
 							onSave = { filename ->
-								// Handle saving the document with the filename
+								pdfUris?.let { uri ->
+									savePdfFile(uri, filename)
+								}
 								showDialog = false
 							}
 						)
@@ -109,27 +118,46 @@ class MainActivity : ComponentActivity() {
 			}
 		}
 	}
-
+	// Properties for the document scanner
 	private fun createDocumentScanner(): GmsDocumentScanner {
 		val docScanOptions = GmsDocumentScannerOptions.Builder()
 			.setScannerMode(SCANNER_MODE_FULL)
 			.setGalleryImportAllowed(true)
 			.setPageLimit(Int.MAX_VALUE)
-			.setResultFormats(RESULT_FORMAT_PDF, RESULT_FORMAT_JPEG)
+			.setResultFormats(RESULT_FORMAT_PDF)
 			.build()
 		return GmsDocumentScanning.getClient(docScanOptions)
 	}
-
-	private fun savePdfFile(pdfUri: Uri) {
-		val filestream = FileOutputStream(File(filesDir, "docScan.pdf"))
-		contentResolver.openInputStream(pdfUri)?.use {
-			it.copyTo(filestream)
+	// Saves file after scanning
+	private fun savePdfFile(pdfUri: Uri, name: String) {
+		try {
+			val file = File(filesDir, name)
+			val filestream = FileOutputStream(file)
+			contentResolver.openInputStream(pdfUri)?.use { inputStream ->
+				inputStream.copyTo(filestream)}
+			// Success Toast
+			Toast.makeText(this@MainActivity, "PDF saved successfully!", Toast.LENGTH_SHORT).show()
+			Handler(Looper.getMainLooper()).postDelayed({
+				val pdfFileUri = FileProvider.getUriForFile(
+					this@MainActivity,
+					"${this@MainActivity.packageName}.fileprovider",
+					file
+				)
+				val intent = Intent(Intent.ACTION_VIEW).apply {
+					setDataAndType(pdfFileUri, "application/pdf")
+					addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+				}
+				this@MainActivity.startActivity(intent)
+			}, 100)
+		} catch (e: IOException) {
+			Log.e("SavePDF", "Error saving PDF: ${e.message}")
+			// Error Toast
+			Toast.makeText(this@MainActivity, "Error saving PDF: ${e.message}", Toast.LENGTH_LONG).show()
 		}
 	}
 
 	@Composable
 	private fun createDocLauncher(
-		onScanned: (List<Uri>) -> Unit,
 		onPdfSaved: (Uri) -> Unit
 	): ActivityResultLauncher<IntentSenderRequest> {
 		return rememberLauncherForActivityResult(
@@ -137,8 +165,6 @@ class MainActivity : ComponentActivity() {
 			onResult = {
 				if (it.resultCode == RESULT_OK) {
 					val result = GmsDocumentScanningResult.fromActivityResultIntent(it.data)
-					val uris = result?.pages?.map { it.imageUri } ?: emptyList()
-					onScanned(uris)
 					result?.pdf?.let { pdf -> onPdfSaved(pdf.uri) }
 				}
 			}
@@ -179,26 +205,26 @@ fun ScanDocumentButton(
 		)
 	}
 }
-
-@Composable
-fun ScannedImages(imageURIs: List<Uri>) {
-	Column(
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(16.dp),
-		verticalArrangement = Arrangement.Top,
-		horizontalAlignment = Alignment.CenterHorizontally
-	) {
-		imageURIs.forEach { uri ->
-			AsyncImage(
-				model = uri,
-				contentDescription = null,
-				contentScale = ContentScale.FillWidth,
-				modifier = Modifier.fillMaxWidth().padding(8.dp)
-			)
-		}
-	}
-}
+//
+//@Composable
+//fun ScannedImages(imageURIs: List<Uri>) {
+//	Column(
+//		modifier = Modifier
+//			.fillMaxWidth()
+//			.padding(16.dp),
+//		verticalArrangement = Arrangement.Top,
+//		horizontalAlignment = Alignment.CenterHorizontally
+//	) {
+//		imageURIs.forEach { uri ->
+//			AsyncImage(
+//				model = uri,
+//				contentDescription = null,
+//				contentScale = ContentScale.FillWidth,
+//				modifier = Modifier.fillMaxWidth().padding(8.dp)
+//			)
+//		}
+//	}
+//}
 
 @Composable
 fun DocumentScanScreen(onDismiss: () -> Unit, onSave: (String) -> Unit) {
