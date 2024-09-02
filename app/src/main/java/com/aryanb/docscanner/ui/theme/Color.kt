@@ -1,4 +1,4 @@
-package com.example.docscanner.ui.theme
+package com.aryanb.docscanner.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

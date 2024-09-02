@@ -1,4 +1,4 @@
-package com.example.docscanner
+package com.aryanb.docscanner
 
 import org.junit.Test
 

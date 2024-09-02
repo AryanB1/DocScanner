@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.docscanner"
+    namespace = "com.aryanb.docscanner"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.docscanner"
+        applicationId = "com.aryanb.docscanner"
         minSdk = 29
         targetSdk = 34
         versionCode = 1

@@ -1,4 +1,4 @@
-package com.example.docscanner
+package com.aryanb.docscanner
 
 import android.content.Intent
 import android.net.Uri
@@ -57,7 +57,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
-import com.example.docscanner.ui.theme.DocScannerTheme
+import com.aryanb.docscanner.ui.theme.DocScannerTheme
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions.RESULT_FORMAT_PDF
@@ -287,7 +287,7 @@ fun ScanDocumentButton(
 	) {
 		Icon(
 			Icons.Filled.Add,
-			contentDescription = stringResource(R.string.scan_new_document),
+			contentDescription = "click the button to scan a new document!",
 			modifier = Modifier.size(40.dp),
 		)
 	}

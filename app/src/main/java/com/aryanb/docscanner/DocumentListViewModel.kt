@@ -1,4 +1,4 @@
-package com.example.docscanner
+package com.aryanb.docscanner
 
 import android.content.Context
 import android.graphics.Bitmap
